@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Brandstorming - Digital Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,600;0,800;1,300;1,400;1,600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+        
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+
+        body { 
+            background-color: #1a1a1a; 
+            color: #333; 
+            font-family: 'Kanit', sans-serif;
+            overflow-x: hidden;
+            overscroll-behavior-y: none;
+            position: relative;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-font { font-family: 'Bangers', cursive; letter-spacing: 2px; }
+
+        /* Sfondo flottante animato */
+        .bg-texture {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            opacity: 0.08; 
+            z-index: 0;
+            pointer-events: none;
+        }
+        @keyframes floatBg {
+            0% { transform: translate(0px, 0px); }
+            100% { transform: translate(25px, -25px); }
+        }
+
+        .game-card { 
+            background-color: #f7f5ef; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            z-index: 10;
+            position: relative;
+        }
+
+        .card-neutra { background-color: #f7f5ef; color: #333; border: none; }
+        .card-persone { background-color: #EC4899; color: white; border: none;}  
+        .card-brand { background-color: #3B82F6; color: white; border: none;}    
+        .card-titoli { background-color: #10B981; color: white; border: none;}   
+        .card-factotum { background-color: #F97316; color: white; border: none;} 
+        .card-jolly { background-color: #ffffff; color: #1a1a1a; border: none;}  
+        .card-assurdo { background-color: #1a1a1a; color: #FFD700; border: 6px solid #FFD700; }
+
+        .btn-brandstorm { 
+            background-color: #1a1a1a; 
+            color: white; 
+            transition: transform 0.1s, background-color 0.2s;
+            touch-action: manipulation;
+        }
+        .btn-brandstorm:active { transform: scale(0.95); }
+        
+        button { touch-action: manipulation; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+
+        .epic-text {
+            animation: epicTextAnim 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            text-shadow: 0px 5px 2px rgba(0,0,0,1), 0px 0px 20px rgba(255, 0, 50, 0.9), 0px 0px 40px rgba(255, 0, 50, 0.6);
+        }
+        @keyframes epicTextAnim {
+            0% { opacity: 0; transform: translateY(40px) scale(0.5); filter: blur(8px); }
+            50% { opacity: 1; transform: translateY(-5px) scale(1.05); filter: blur(0px); text-shadow: 0px 5px 2px rgba(0,0,0,1), 0px 0px 40px rgba(255, 0, 50, 1), 0px 0px 80px rgba(255, 0, 50, 0.8); }
+            100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+        }
+
+        /* Ottimizzazione Dado per Mobile */
+        .dice-scene {
+            width: 140px; height: 140px; 
+            -webkit-perspective: 1000px;
+            perspective: 1000px;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%); /* Centratura assoluta e perfetta */
+            z-index: 100;
+            display: none;
+        }
+        .cube {
+            width: 100%; height: 100%;
+            position: relative;
+            -webkit-transform-style: preserve-3d;
+            transform-style: preserve-3d;
+        }
+        .cube.rolling {
+            -webkit-animation: dropAndRoll 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: dropAndRoll 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+        .cube-face {
+            position: absolute;
+            width: 140px; height: 140px;
+            border: 4px solid #fff;
+            border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.4);
+            overflow: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        
+        .cube-face img { width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.5)); transition: all 0.1s;}
+        
+        .face-front  { transform: rotateY(  0deg) translateZ(70px); background-color: #EC4899; }
+        .face-back   { transform: rotateY(180deg) translateZ(70px); background-color: #3B82F6; }
+        .face-right  { transform: rotateY( 90deg) translateZ(70px); background-color: #10B981; }
+        .face-left   { transform: rotateY(-90deg) translateZ(70px); background-color: #F97316; }
+        .face-top    { transform: rotateX( 90deg) translateZ(70px); background-color: #ffffff; }
+        .face-bottom { transform: rotateX(-90deg) translateZ(70px); background-color: #1a1a1a; border-color: #FFD700; }
+
+        @-webkit-keyframes dropAndRoll {
+            0% { -webkit-transform: translate3d(0, -500px, -200px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.5); opacity: 1; }
+            30% { -webkit-transform: translate3d(0, 30px, 0) rotateX(720deg) rotateY(360deg) rotateZ(180deg) scale(1.2); opacity: 1; } 
+            50% { -webkit-transform: translate3d(0, -80px, 0) rotateX(1080deg) rotateY(720deg) rotateZ(360deg) scale(1); opacity: 1; } 
+            75% { -webkit-transform: translate3d(0, 15px, 0) rotateX(1440deg) rotateY(900deg) rotateZ(540deg) scale(1); opacity: 1; }
+            90% { -webkit-transform: translate3d(0, 0, 0) rotateX(1620deg) rotateY(1080deg) rotateZ(720deg) scale(1); opacity: 1;}
+            100% { -webkit-transform: translate3d(0, 0, 0) rotateX(1620deg) rotateY(1080deg) rotateZ(720deg) scale(0); opacity: 0;}
+        }
+
+        @keyframes dropAndRoll {
+            0% { transform: translate3d(0, -500px, -200px) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.5); opacity: 1; }
+            30% { transform: translate3d(0, 30px, 0) rotateX(720deg) rotateY(360deg) rotateZ(180deg) scale(1.2); opacity: 1; } 
+            50% { transform: translate3d(0, -80px, 0) rotateX(1080deg) rotateY(720deg) rotateZ(360deg) scale(1); opacity: 1; } 
+            75% { transform: translate3d(0, 15px, 0) rotateX(1440deg) rotateY(900deg) rotateZ(540deg) scale(1); opacity: 1; }
+            90% { transform: translate3d(0, 0, 0) rotateX(1620deg) rotateY(1080deg) rotateZ(720deg) scale(1); opacity: 1;}
+            100% { transform: translate3d(0, 0, 0) rotateX(1620deg) rotateY(1080deg) rotateZ(720deg) scale(0); opacity: 0;}
+        }
+
+        #timer-display.ending { color: #ff0055; animation: pulseAlarm 1s infinite; }
+        @keyframes pulseAlarm { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); opacity: 0.8;} }
+        
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+
+        /* Helper Dinamici per Classifica */
+        .text-inherit-color { color: inherit; }
+    </style>
+</head>
+<body class="items-center justify-start md:justify-center p-3 pt-6 md:p-4">
+
+    <!-- Container Sfondo Animato -->
+    <div id="bg-container" class="fixed inset-0 z-0 pointer-events-none overflow-hidden"></div>
+
+    <!-- Header & Tasto Guida -->
+    <header class="mb-4 w-full relative z-10 flex-shrink-0">
+        <div class="max-w-2xl mx-auto w-full flex justify-between items-start px-2">
+            
+            <div class="flex-grow flex flex-col items-center justify-center pt-2">
+                <img src="logo.png" alt="Brandstorming Logo" class="w-[70%] max-w-[260px] md:max-w-[300px] transform -rotate-1 drop-shadow-2xl">
+                <p class="text-gray-400 text-[9px] md:text-sm uppercase tracking-[0.3em] font-light mt-1 text-center">Agenzia Creativa Fuori Controllo</p>
+            </div>
+
+            <div class="absolute right-2 top-0 md:right-4">
+                <button onclick="apriGuida()" class="w-10 h-10 md:w-12 md:h-12 bg-black text-white rounded-full font-black flex items-center justify-center text-xl md:text-2xl border border-white/20 shadow-lg hover:scale-110 transition-transform">?</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dado 3D -->
+    <div id="dice-scene" class="dice-scene">
+        <div id="dice-cube" class="cube">
+            <div class="cube-face face-front"><img id="face-img-1" src="persone.png"></div>
+            <div class="cube-face face-back"><img id="face-img-2" src="brand.png"></div>
+            <div class="cube-face face-right"><img id="face-img-3" src="titolo.png"></div>
+            <div class="cube-face face-left"><img id="face-img-4" src="factotum.png"></div>
+            <div class="cube-face face-top"><img id="face-img-5" src="brandstorm.png"></div>
+            <div class="cube-face face-bottom"><img id="face-img-6" src="brief_assurdo.png"></div>
+        </div>
+    </div>
+
+    <!-- Animazione Testo Epic -->
+    <div id="png-intro-scene" class="fixed inset-0 z-50 flex flex-col items-center justify-center hidden bg-black/80 backdrop-blur-sm">
+        <img id="intro-png" src="" class="w-56 md:w-80 drop-shadow-[0_0_30px_rgba(255,255,255,0.3)]">
+        <div id="intro-text" class="text-5xl md:text-7xl text-white logo-font mt-6 uppercase tracking-widest text-center px-4 opacity-0"></div>
+    </div>
+
+    <!-- SCHEDA PRINCIPALE -->
+    <main id="main-card" class="w-full max-w-2xl game-card card-neutra p-5 md:p-10 rounded-[2.5rem] md:rounded-[3rem] text-center flex flex-col justify-between flex-grow md:flex-grow-0 min-h-[400px] transition-opacity duration-300 z-10">
+        
+        <!-- AREA GIOCO ATTIVO -->
+        <div id="game-area" class="flex-grow flex flex-col justify-center items-center h-full w-full">
+            <div id="display-area" class="flex-grow flex flex-col justify-center items-center mb-4 w-full">
+                
+                <div class="w-full flex justify-between items-center mb-4 px-2">
+                    <button id="btn-show-classifica" onclick="mostraClassificaManuale()" class="text-xs md:text-sm font-bold bg-black/10 px-4 py-2 rounded-full uppercase hidden hover:bg-black/20 transition-colors text-inherit-color">🏆 Classifica</button>
+                    <div id="dice-result" class="text-xs md:text-lg font-semibold uppercase tracking-widest opacity-70 flex-grow text-center"></div>
+                    <div class="w-[100px] hidden" id="spacer-header"></div> 
+                </div>
+
+                <div id="main-content" class="text-3xl md:text-5xl font-extrabold leading-tight mb-2 uppercase">PREMI IL TASTO NERO.</div>
+                <div id="sub-info" class="mt-2 w-full max-w-lg mx-auto"></div>
+            </div>
+
+            <div class="space-y-3 mt-auto w-full">
+                <button id="roll-button" onclick="avviaLancioDado()" class="w-full py-5 md:py-6 rounded-2xl md:rounded-[1.5rem] text-2xl md:text-3xl font-black uppercase btn-brandstorm shadow-2xl tracking-widest">
+                    🎲 LANCIA IL DADO
+                </button>
+                
+                <div id="timer-container" class="flex gap-2 hidden animate-fade-in flex-col md:flex-row w-full">
+                    <button id="timer-btn" onclick="startTimer()" class="flex-1 py-4 md:py-6 bg-black/15 text-inherit-color hover:bg-black/25 rounded-xl md:rounded-2xl font-black transition text-xl md:text-2xl uppercase tracking-wide border-2 border-black/10">
+                        ⏳ Avvia Timer (60s)
+                    </button>
+                    <button id="skip-timer-btn" onclick="skipTimer()" class="px-5 py-3 md:py-0 bg-red-600 text-white rounded-xl md:rounded-2xl font-black hover:bg-red-700 transition uppercase shadow-lg text-lg hidden">
+                        ⏭️ SKIP
+                    </button>
+                </div>
+
+                <button id="btn-vai-votazione" onclick="vaiAllaVotazione()" class="w-full py-4 md:py-5 bg-white text-black border-2 border-gray-300 rounded-2xl md:rounded-[1.5rem] text-xl md:text-2xl font-black uppercase shadow-xl tracking-widest hidden animate-fade-in hover:bg-gray-100 transition-colors">
+                    🗳️ VAI ALLA VOTAZIONE
+                </button>
+                
+                <button id="btn-nuovo-round-libero" onclick="resetRoundLibero()" class="w-full py-4 md:py-5 bg-white text-black border-2 border-gray-300 rounded-2xl md:rounded-[1.5rem] text-xl md:text-2xl font-black uppercase tracking-widest hidden animate-fade-in shadow-xl hover:bg-gray-100 transition-colors">
+                    🎲 PROSSIMO ROUND
+                </button>
+            </div>
+        </div>
+
+        <!-- AREA VOTAZIONE & CLASSIFICA -->
+        <div id="voting-area" class="flex-grow flex flex-col justify-start items-center hidden h-full w-full">
+            <h2 id="voting-title" class="text-3xl md:text-5xl font-extrabold uppercase mb-2 tracking-widest text-black leading-tight">VOTAZIONE ROUND</h2>
+            <p id="voting-subtitle" class="text-sm md:text-base font-bold uppercase opacity-70 mb-6 text-black">Chi ha avuto l'idea migliore?</p>
+            
+            <div id="normal-voting" class="w-full max-w-lg flex flex-col justify-center animate-fade-in">
+                <div id="players-list" class="space-y-3 mb-6 overflow-y-auto max-h-[40vh] pr-2 w-full text-inherit-color">
+                    <!-- Lista giocatori generata -->
+                </div>
+                
+                <!-- SEZIONE EUREKA -->
+                <div id="eureka-section" class="w-full mt-2 mb-6 hidden">
+                    <div class="border-t-2 border-current opacity-80 pt-5 w-full">
+                        <p class="text-[12px] md:text-sm font-bold uppercase mb-3 text-inherit-color opacity-90">Siete miracolosamente tutti d'accordo? Manda il cliente in estasi.</p>
+                        <button onclick="mostraSelezioneEureka()" class="w-full py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-black uppercase rounded-xl shadow-md transition text-lg tracking-widest border-2 border-yellow-600">
+                            🌟 ASSEGNA EUREKA
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEZIONE SELEZIONE VINCITORE EUREKA -->
+            <div id="eureka-voting" class="w-full max-w-lg flex-col justify-center hidden animate-fade-in">
+                <div id="eureka-players-list" class="space-y-3 mb-6 overflow-y-auto max-h-[40vh] pr-2 w-full">
+                    <!-- Lista giocatori per eureka -->
+                </div>
+                <div id="eureka-actions" class="w-full"></div>
+            </div>
+
+            <!-- TASTI AZIONE POST VOTAZIONE -->
+            <div id="classifica-actions" class="w-full max-w-lg mt-auto flex flex-col items-center">
+                <button id="btn-prossimo-round" onclick="nuovoRoundVotato()" class="w-full py-5 bg-white text-black border-2 border-gray-300 rounded-2xl md:rounded-[1.5rem] text-xl md:text-2xl font-black uppercase tracking-widest hover:bg-gray-100 transition-colors shadow-xl hidden">
+                    🎲 PROSSIMO ROUND
+                </button>
+                <button id="btn-reset-classifica" onclick="resetGiocatori()" class="mt-4 md:mt-6 text-[10px] md:text-xs font-black bg-red-600/20 text-red-700 rounded-lg uppercase hover:bg-red-600 hover:text-white transition hidden p-3 tracking-widest w-full">
+                    ⚠ AZZERA CLASSIFICA E GIOCA LIBERO
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER: AGGIUNGI GIOCATORI PILL -->
+    <footer class="mt-6 mb-4 w-full flex justify-center z-10 flex-shrink-0">
+        <button onclick="apriSetupGiocatori()" class="px-6 py-3 rounded-full border-2 border-white/20 text-white font-bold tracking-widest uppercase text-xs hover:bg-white hover:text-black transition shadow-lg backdrop-blur-sm">
+            Aggiungi Giocatori
+        </button>
+    </footer>
+
+    <div id="timer-display" class="mt-2 md:mt-4 text-6xl md:text-8xl font-black text-white opacity-10 tracking-widest logo-font transition-all relative z-10 hidden flex-shrink-0 absolute top-1/2 transform -translate-y-1/2 pointer-events-none">60</div>
+
+    <!-- MODALE IMPOSTAZIONI GIOCATORI -->
+    <div id="setup-modal" class="fixed inset-0 z-[150] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-[#f7f5ef] w-full max-w-md p-6 md:p-8 rounded-[2rem] shadow-2xl relative transform scale-95 transition-transform duration-300 text-center" id="setup-content">
+            <button onclick="chiudiSetupGiocatori()" class="absolute top-4 right-4 w-10 h-10 bg-black/10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/20 transition text-black">×</button>
+            
+            <h2 class="text-3xl md:text-4xl font-black uppercase mb-2 tracking-widest logo-font text-black">CHI GIOCA?</h2>
+            <p class="text-xs opacity-70 mb-6 font-bold uppercase text-gray-600">Vuoi tenere i punti? Inserisci i nomi.</p>
+            
+            <div id="player-inputs" class="w-full max-w-sm mx-auto space-y-3 mb-4 max-h-[40vh] overflow-y-auto p-1">
+                <!-- Inputs dinamici -->
+            </div>
+            
+            <div class="flex gap-2 w-full max-w-sm mx-auto mb-6">
+                <button onclick="aggiungiInputGiocatore()" id="btn-add-player" class="flex-1 py-3 bg-black/10 hover:bg-black/20 text-black rounded-xl font-bold uppercase transition tracking-wider">➕ Aggiungi</button>
+                <button onclick="rimuoviInputGiocatore()" id="btn-rm-player" class="w-12 py-3 bg-red-500/20 text-red-700 hover:bg-red-500/40 rounded-xl font-bold transition hidden">➖</button>
+            </div>
+            
+            <button onclick="salvaGiocatori()" class="w-full max-w-sm mx-auto py-4 bg-black text-white rounded-2xl text-xl font-black uppercase tracking-widest hover:scale-[0.98] transition-transform shadow-lg mb-3">SALVA E GIOCA</button>
+        </div>
+    </div>
+
+    <!-- MODALE GUIDA -->
+    <div id="guide-modal" class="fixed inset-0 z-[200] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-[#f7f5ef] w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 md:p-8 rounded-[2rem] shadow-2xl relative transform scale-95 transition-transform duration-300" id="guide-content">
+            <button onclick="chiudiGuida()" class="sticky top-0 float-right w-10 h-10 bg-black/10 rounded-full flex items-center justify-center font-bold text-xl hover:bg-black/20 transition text-black z-10">×</button>
+            
+            <h2 class="text-4xl font-black uppercase mb-6 logo-font text-center tracking-widest text-black clear-both">COME SI GIOCA</h2>
+            
+            <ol class="text-left space-y-5 font-semibold text-gray-700 text-sm md:text-base leading-snug mb-8">
+                <li class="flex items-start gap-3">
+                    <span class="text-2xl drop-shadow-sm">🎲</span> 
+                    <span><strong class="text-black uppercase tracking-wide">1. Lancia il dado:</strong> Scopri a quale Macro-Categoria appartiene il brand e il bizzarro Target assegnato.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="text-2xl drop-shadow-sm">🗣️</span> 
+                    <span><strong class="text-black uppercase tracking-wide">2. Scegli la mappa:</strong> Mettetevi d'accordo e cliccate su una delle opzioni disponibili per completare il quadro.</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="text-2xl drop-shadow-sm">💡</span> 
+                    <span><strong class="text-black uppercase tracking-wide">3. Leggi il brief:</strong> Leggete ad alta voce la frase finale. Quello è il vostro compito impossibile!</span>
+                </li>
+                <li class="flex items-start gap-3">
+                    <span class="text-2xl drop-shadow-sm">⏳</span> 
+                    <span><strong class="text-black uppercase tracking-wide">4. Brainstorming:</strong> Avviate il timer. Sparate idee folli, votate la migliore e assegnate i punti!</span>
+                </li>
+            </ol>
+
+            <details class="group bg-black/5 rounded-2xl overflow-hidden text-left mb-6">
+                <summary class="cursor-pointer p-4 font-black uppercase tracking-widest flex justify-between items-center bg-black/10 hover:bg-black/20 transition-colors text-black text-sm md:text-base">
+                    📖 REGOLAMENTO COMPLETO
+                    <span class="transform group-open:rotate-180 transition-transform text-xl leading-none">▼</span>
+                </summary>
+                
+                <div class="p-5 md:p-6 space-y-6 text-sm text-gray-800 leading-relaxed user-select-text">
+                    <section>
+                        <h3 class="font-black text-lg uppercase mb-1">1. COS'È BRANDSTORMING</h3>
+                        <p>Brandstorming è un party game di giochi di parole stupidi ma geniali. Un gioco in cui si prendono nomi che tutti conoscono e si cambiano il meno possibile per rispondere a richieste completamente folli.</p>
+                    </section>
+                    <section>
+                        <h3 class="font-black text-lg uppercase mb-1">2. OBIETTIVO DEL GIOCO</h3>
+                        <p>Ogni round è una richiesta di un cliente. Quando vinci un round guadagni 1 punto. Alla fine dei giri concordati, chi ha più punti vince.</p>
+                    </section>
+                    <section>
+                        <h3 class="font-black text-lg uppercase mb-1">3. IL ROUND E IL CLIENTE</h3>
+                        <p>Il giocatore di turno è il <strong>Direttore Creativo (DC)</strong> e lancia il dado. Crea il brief selezionando una sotto-categoria dall'App. Se esce "Fai Tu", inventa tutto. Se esce "Brief Assurdo", legge semplicemente lo schermo.</p>
+                    </section>
+                    <section>
+                        <h3 class="font-black text-lg uppercase mb-1">4. BRANDSTORM (1 MINUTO)</h3>
+                        <p>Parte la clessidra. Per un minuto, tutti (compreso il DC) sparano risposte a voce. Allo scadere, ognuno ripete la sua. Poi si vota.</p>
+                    </section>
+                    <section>
+                        <h3 class="font-black text-lg uppercase mb-1">5. LA SEMANTICA</h3>
+                        <p>Usa la parola del target o una sua associazione. L'importante è che il brand di partenza sia riconoscibile.</p>
+                        <div class="bg-black/5 p-3 rounded-xl mt-2 italic text-xs">
+                            <strong>Esempio:</strong> Brand sportivo + Pigrizia.<br>
+                            NO: "Nike Divano" (non storpiato).<br>
+                            SÌ: "Mike" (mai fare sport) o "Pumba" (da Puma).
+                        </div>
+                    </section>
+                    <section>
+                        <h3 class="font-black text-lg uppercase mb-1">6. VOTAZIONE E EUREKA</h3>
+                        <p>Al via, tutti indicano con il dito la risposta preferita (vietato votarsi). Chi vince prende 1 punto. In caso di spareggio, decide il DC.</p>
+                        <p class="mt-2 text-yellow-600 font-bold">🌟 EUREKA:</p>
+                        <p>Se tutti i voti del tavolo vanno alla stessa identica risposta, è un EUREKA! Usa il bottone speciale nell'app per assegnare direttamente +2 punti al vincitore.</p>
+                    </section>
+                </div>
+            </details>
+            
+            <button onclick="chiudiGuida()" class="w-full py-4 bg-black text-white font-black text-lg uppercase rounded-2xl tracking-widest hover:scale-[0.98] transition-transform shadow-lg">TUTTO CHIARO!</button>
+        </div>
+    </div>
+
+    <!-- AUDIO FILES -->
+    <audio id="ringAvvioSound" src="ring_avvio.wav" preload="auto"></audio>
+    <audio id="alarmClockSound" src="alarm_clock.wav" preload="auto"></audio>
+    <audio id="alarmFineSound" src="alarm_fine.wav" preload="auto"></audio>
+    <audio id="diceRollSound" src="dice_roll.wav" preload="auto"></audio>
+
+    <script>
+        // --- INIZIALIZZAZIONE E SFONDO ---
+        let timerInterval;
+        let shuffleInterval;
+        let seconds = 60;
+        let audioUnlocked = false;
+        let players = [];
+        let numInputs = 0; // Parte da 0 come richiesto
+        let facciaPescata = "";
+
+        window.onload = function() {
+            const bgContainer = document.getElementById('bg-container');
+            for(let i=0; i<20; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'absolute';
+                wrapper.style.top = `${Math.floor(Math.random() * 100)}%`;
+                wrapper.style.left = `${Math.floor(Math.random() * 100)}%`;
+                wrapper.style.animation = `floatBg ${Math.random() * 15 + 15}s ease-in-out infinite alternate`;
+                
+                const img = document.createElement('img');
+                img.src = 'logo.png';
+                img.style.width = `${Math.floor(Math.random() * 120) + 40}px`;
+                img.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+                img.style.opacity = (Math.random() * 0.04) + 0.02;
+                
+                wrapper.appendChild(img);
+                bgContainer.appendChild(wrapper);
+            }
+
+            if(!localStorage.getItem('brandstorming_visited')) {
+                apriGuida();
+                localStorage.setItem('brandstorming_visited', 'true');
+            }
+
+            caricaGiocatoriSalvati();
+        };
+
+        // --- GESTIONE COLORI DINAMICI CARTA ---
+        function getStiliDinamici() {
+            let textColor = "text-white";
+            let btnClass = "bg-white text-black hover:bg-gray-200";
+            let bgClass = "bg-black/20 border-white/20";
+            
+            if (facciaPescata === "BRANDSTORM" || facciaPescata === "") {
+                textColor = "text-black";
+                btnClass = "bg-black text-white hover:bg-gray-800";
+                bgClass = "bg-black/5 border-black/10";
+            } else if (facciaPescata === "BRIEF ASSURDO") {
+                textColor = "text-yellow-400";
+                btnClass = "bg-yellow-400 text-black hover:bg-yellow-500";
+                bgClass = "bg-white/10 border-yellow-400/30";
+            }
+            return { textColor, btnClass, bgClass };
+        }
+
+        // --- MODALI ---
+        function apriGuida() {
+            const modal = document.getElementById('guide-modal');
+            const content = document.getElementById('guide-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+        function chiudiGuida() {
+            const modal = document.getElementById('guide-modal');
+            const content = document.getElementById('guide-content');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        // --- SISTEMA GIOCATORI ---
+        function caricaGiocatoriSalvati() {
+            const saved = localStorage.getItem('brandstorming_players');
+            if (saved) {
+                players = JSON.parse(saved);
+                numInputs = players.length;
+                document.getElementById('btn-show-classifica').classList.remove('hidden');
+                document.getElementById('spacer-header').classList.remove('hidden');
+            } else {
+                players = [];
+                numInputs = 0; 
+            }
+        }
+
+        function apriSetupGiocatori() {
+            renderizzaInputModale();
+            const modal = document.getElementById('setup-modal');
+            const content = document.getElementById('setup-content');
+            modal.classList.remove('hidden');
+            setTimeout(() => { modal.classList.remove('opacity-0'); content.classList.remove('scale-95'); }, 10);
+        }
+        
+        function chiudiSetupGiocatori() {
+            const modal = document.getElementById('setup-modal');
+            const content = document.getElementById('setup-content');
+            modal.classList.add('opacity-0'); content.classList.add('scale-95');
+            setTimeout(() => { modal.classList.add('hidden'); }, 300);
+        }
+
+        function renderizzaInputModale() {
+            const container = document.getElementById('player-inputs');
+            
+            let currentValues = [];
+            for(let i=0; i<container.children.length; i++) {
+                currentValues.push(container.children[i].value);
+            }
+            container.innerHTML = '';
+            
+            for(let i=0; i<numInputs; i++) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.id = `p-input-${i}`;
+                input.className = "w-full p-4 rounded-xl bg-white border-2 border-gray-300 text-black font-bold text-center uppercase tracking-wider mb-2 focus:border-black/50 outline-none transition placeholder-gray-400";
+                input.placeholder = `NOME GIOCATORE ${i+1}`;
+                
+                if (currentValues[i] !== undefined) {
+                    input.value = currentValues[i];
+                } else if (players[i] && !currentValues.length) {
+                    input.value = players[i].name;
+                } else {
+                    input.value = "";
+                }
+                container.appendChild(input);
+            }
+            aggiornaBottoniPlayer();
+        }
+
+        function aggiungiInputGiocatore() {
+            if(numInputs < 6) { numInputs++; renderizzaInputModale(); }
+        }
+        function rimuoviInputGiocatore() {
+            if(numInputs > 0) { numInputs--; renderizzaInputModale(); }
+        }
+        function aggiornaBottoniPlayer() {
+            document.getElementById('btn-rm-player').classList.toggle('hidden', numInputs === 0);
+            document.getElementById('btn-add-player').classList.toggle('hidden', numInputs >= 6);
+        }
+
+        function salvaGiocatori() {
+            let tempPlayers = [];
+            for(let i=0; i<numInputs; i++) {
+                let val = document.getElementById(`p-input-${i}`).value.trim();
+                if(val !== "") {
+                    let existing = players.find(p => p.name === val.toUpperCase());
+                    tempPlayers.push({ name: val.toUpperCase(), score: existing ? existing.score : 0 });
+                }
+            }
+            
+            if(tempPlayers.length === 1) {
+                alert("Inserisci almeno 2 giocatori per attivare la classifica, altrimenti lascia vuoto.");
+                return;
+            }
+            
+            players = tempPlayers;
+            
+            if (players.length > 0) {
+                localStorage.setItem('brandstorming_players', JSON.stringify(players));
+                document.getElementById('btn-show-classifica').classList.remove('hidden');
+                document.getElementById('spacer-header').classList.remove('hidden');
+            } else {
+                localStorage.removeItem('brandstorming_players');
+                document.getElementById('btn-show-classifica').classList.add('hidden');
+                document.getElementById('spacer-header').classList.add('hidden');
+            }
+            chiudiSetupGiocatori();
+        }
+
+        function resetGiocatori() {
+            if(confirm("Vuoi azzerare la classifica e rimuovere tutti i giocatori per giocare in modalità libera?")) {
+                localStorage.removeItem('brandstorming_players');
+                players = [];
+                numInputs = 0;
+                document.getElementById('btn-show-classifica').classList.add('hidden');
+                document.getElementById('spacer-header').classList.add('hidden');
+                document.getElementById('btn-reset-classifica').classList.add('hidden');
+                
+                document.getElementById('voting-area').classList.add('hidden');
+                document.getElementById('game-area').classList.remove('hidden');
+                resetGenerale();
+            }
+        }
+
+
+        // --- LOGICA CLASSIFICA E EUREKA ---
+        function vaiAllaVotazione() {
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('voting-area').classList.remove('hidden');
+            document.getElementById('timer-display').classList.add('hidden');
+            document.getElementById('btn-vai-votazione').classList.add('hidden');
+            renderizzaVotazione();
+        }
+
+        function mostraClassificaManuale() {
+            document.getElementById('game-area').classList.add('hidden');
+            document.getElementById('voting-area').classList.remove('hidden');
+            document.getElementById('timer-display').classList.add('hidden');
+            renderizzaClassifica();
+        }
+
+        function renderizzaVotazione() {
+            document.getElementById('normal-voting').classList.remove('hidden');
+            document.getElementById('eureka-section').classList.remove('hidden');
+            document.getElementById('eureka-voting').classList.add('hidden');
+            document.getElementById('classifica-actions').classList.add('hidden');
+            
+            const styles = getStiliDinamici();
+            
+            document.getElementById('voting-title').innerText = "VOTAZIONE ROUND";
+            document.getElementById('voting-title').className = `text-3xl md:text-5xl font-extrabold uppercase mb-2 tracking-widest leading-tight ${styles.textColor}`;
+            
+            document.getElementById('voting-subtitle').innerText = "Chi ha avuto l'idea migliore?";
+            document.getElementById('voting-subtitle').className = `text-sm md:text-base font-bold uppercase opacity-80 mb-6 ${styles.textColor}`;
+
+            const list = document.getElementById('players-list');
+            list.innerHTML = '';
+
+            players.forEach((p, index) => {
+                list.innerHTML += `
+                    <div class="${styles.bgClass} rounded-2xl p-2.5 flex items-center justify-between border gap-3">
+                        <span class="font-black text-xl md:text-2xl uppercase tracking-wider ${styles.textColor} pl-2 truncate flex-grow text-left">${p.name}</span>
+                        <button onclick="assegnaPunti(${index}, 1)" class="px-5 py-3 md:py-4 ${styles.btnClass} font-black uppercase rounded-xl transition text-sm whitespace-nowrap shadow-md tracking-wider">VITTORIA</button>
+                    </div>
+                `;
+            });
+        }
+
+        function mostraSelezioneEureka() {
+            document.getElementById('normal-voting').classList.add('hidden');
+            document.getElementById('eureka-voting').classList.remove('hidden');
+            document.getElementById('eureka-voting').classList.add('flex');
+            document.getElementById('classifica-actions').classList.add('hidden');
+            
+            const styles = getStiliDinamici();
+            
+            document.getElementById('voting-title').innerText = "CHI HA FATTO EUREKA?";
+            document.getElementById('voting-subtitle').innerText = "Seleziona chi ha pronunciato la frase magica.";
+            
+            const list = document.getElementById('eureka-players-list');
+            list.innerHTML = '';
+            players.forEach((p, index) => {
+                list.innerHTML += `
+                    <div class="bg-yellow-400/20 border-2 border-yellow-500 rounded-2xl p-2.5 flex items-center justify-between gap-3">
+                        <span class="font-black text-xl uppercase tracking-wider ${styles.textColor} pl-2 truncate flex-grow text-left">${p.name}</span>
+                        <button onclick="assegnaPunti(${index}, 2)" class="px-5 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-black uppercase rounded-xl shadow-md transition text-sm whitespace-nowrap tracking-wider">EUREKA (+2)</button>
+                    </div>
+                `;
+            });
+
+            document.getElementById('eureka-actions').innerHTML = `
+                <button onclick="renderizzaVotazione()" class="w-full text-xs md:text-sm font-bold ${styles.textColor} opacity-60 hover:opacity-100 uppercase py-3 transition mt-2 tracking-wider">⬅ Annulla e torna ai voti normali</button>
+            `;
+        }
+
+        function assegnaPunti(playerIndex, punti) {
+            players[playerIndex].score += punti;
+            localStorage.setItem('brandstorming_players', JSON.stringify(players));
+            renderizzaClassifica();
+        }
+
+        function renderizzaClassifica() {
+            document.getElementById('normal-voting').classList.add('hidden');
+            document.getElementById('eureka-voting').classList.add('hidden');
+            document.getElementById('eureka-voting').classList.remove('flex');
+            document.getElementById('eureka-section').classList.add('hidden'); 
+            
+            const styles = getStiliDinamici();
+            
+            document.getElementById('voting-title').innerText = "CLASSIFICA ATTUALE";
+            document.getElementById('voting-title').className = `text-3xl md:text-5xl font-extrabold uppercase mb-2 tracking-widest leading-tight ${styles.textColor}`;
+            
+            document.getElementById('voting-subtitle').innerText = "Chi sta dominando l'agenzia?";
+            document.getElementById('voting-subtitle').className = `text-sm md:text-base font-bold uppercase opacity-80 mb-6 ${styles.textColor}`;
+            
+            const list = document.getElementById('players-list');
+            document.getElementById('normal-voting').classList.remove('hidden'); 
+            
+            let sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+            
+            list.innerHTML = '';
+            sortedPlayers.forEach((p, index) => {
+                let medaglia = index === 0 ? "🏆" : (index === 1 ? "🥈" : (index === 2 ? "🥉" : ""));
+                list.innerHTML += `
+                    <div class="${styles.bgClass} rounded-2xl p-4 flex items-center justify-between shadow-sm border">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl w-8 text-center">${medaglia}</span>
+                            <span class="font-black text-xl md:text-2xl uppercase tracking-wider ${styles.textColor} truncate w-[140px] md:w-auto text-left">${p.name}</span>
+                        </div>
+                        <span class="font-black text-4xl md:text-5xl logo-font ${styles.textColor} whitespace-nowrap">${p.score} <span class="text-sm tracking-widest font-sans font-bold">PT</span></span>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('classifica-actions').classList.remove('hidden');
+            document.getElementById('btn-prossimo-round').classList.remove('hidden');
+            document.getElementById('btn-reset-classifica').classList.remove('hidden');
+        }
+
+        function nuovoRoundVotato() {
+            document.getElementById('voting-area').classList.add('hidden');
+            document.getElementById('game-area').classList.remove('hidden');
+            document.getElementById('eureka-section').classList.remove('hidden'); 
+            resetGenerale();
+        }
+
+        function resetRoundLibero() {
+            resetGenerale();
+        }
+        
+        function resetGenerale() {
+            resetTimerUI();
+            
+            facciaPescata = "";
+            const mainCard = document.getElementById('main-card');
+            mainCard.className = "w-full max-w-2xl game-card card-neutra p-5 md:p-10 rounded-[2.5rem] md:rounded-[3rem] text-center flex flex-col justify-between flex-grow md:flex-grow-0 min-h-[400px] transition-opacity duration-300 animate-fade-in z-10";
+            
+            document.getElementById('sub-info').innerHTML = '';
+            document.getElementById('main-content').innerText = "PREMI IL TASTO NERO.";
+            document.getElementById('dice-result').innerText = ""; 
+            
+            document.getElementById('roll-button').classList.remove('hidden');
+            document.getElementById('timer-container').classList.add('hidden');
+            document.getElementById('btn-vai-votazione').classList.add('hidden');
+            document.getElementById('btn-nuovo-round-libero').classList.add('hidden');
+        }
+
+
+        // --- DATI DI GIOCO ---
+        const mappeCreative = {
+            "PERSONE": ["Attori/attrici", "Cantanti", "Sportivi", "Personaggi di finzione", "Personaggi storici", "Personaggi mitologici", "Scrittori/poeti"],
+            "BRAND": ["Sport", "Bevande", "Auto", "Tecnologia", "Moda", "Cibo", "Farmaci/cosmetici", "Catene e super"],
+            "TITOLI": ["Film", "Serie TV", "Cartone animato", "Videogiochi", "Canzoni", "Libri/opere", "Programmi TV", "Riviste", "Giochi da tavola"],
+            "FACTOTUM": ["Animali", "Luoghi", "Sport/hobby", "Professioni", "Modi di dire", "App e social", "Piatti e cucine", "Nomi propri"]
+        };
+
+        const targetList = [
+            "Obesi", "Muscolosi", "Scoreggioni", "Piedi puzzolenti", "Incontinenti", "Impotenti", 
+            "Cacca", "Insonni", "Rifatti", "Nani", "Calvi", "Sudaticci", "Menopausa", 
+            "Malati di Alzheimer", "Ninfomani", "LGBTQ", "Sesso", "Tette grandi", "Peni piccoli", 
+            "Vagina", "Peni grandi", "Eiaculatori precoci", "Porno", "Masturbatori", "Alcolisti", 
+            "Cocaina", "Giocatori d'azzardo", "Fumatori incalliti", "Droga", "Soldi", "Polizia", 
+            "Terroni", "Milanesi", "Marijuana", "Nomadi", "Barboni", "Fascisti", "Anziani", 
+            "Poveri", "Complottisti", "Morte", "Vegani", "Ebrei", "Religiosi", "Astrologi", 
+            "Natale", "Capodanno", "Halloween", "Compleanno", "Fortunati", "Sfortunati", 
+            "Arrabbiati", "Bambini", "Matrimonio", "Divorziati", "Guerra", "Disoccupati", 
+            "Parolacce", "Carcerati", "Disordinati", "Rapinatori", "Studenti", "Freddo", 
+            "Assassini", "Schiavi", "Dormiglioni", "Pipì a letto", "Mafiosi", "Comunisti", 
+            "Malati", "Dieta", "Gravidanza", "Mestruazioni", "Dentisti", "Pigri", "Avari", 
+            "Single", "Insetti", "Pesci", "Uccelli", "Ricchi", "Cinema", "Musica", "Sport", 
+            "Campagna", "Calcio", "Olimpiadi", "Mare", "Montagna", "Cucina", "Alieni", 
+            "Far west", "Medioevo", "Pasqua", "Arti marziali", "Discoteca", "Preistoria", 
+            "Aeroporto", "Supermercato", "Treni"
+        ];
+
+        const briefAssurdi = [
+            "Una casata di Harry Potter per chi ha un'erezione perenne",
+            "Una catena di fast food per chi ha il colesterolo alto",
+            "Un brand di profumi che puzzano volutamente",
+            "Un brand di auto per chi va molto piano",
+            "Un cantante che è sempre confuso",
+            "Un film Disney dove un cane diventa un musicista",
+            "Un supermercato che vende solo cose che ti uccidono",
+            "Un brand di automobili per sordi",
+            "Un brand di dolciumi fatto di sperma",
+            "Una compagnia aerea per chi ha paura di volare",
+            "Un Pokemon che soffre di eiaculazione precoce",
+            "Un nome di un panino del McDonald che ha solo ingredienti romani",
+            "Un nome di una bevanda che fa tornare la vista ai ciechi",
+            "Un'acqua minerale che se la bevi ti trasforma in un cantante",
+            "Una serie TV dove non succede assolutamente niente per 8 stagioni",
+            "Un film horror che però fa ridere",
+            "Un videogioco dove devi solo aspettare",
+            "Uno strumento musicale che quando suoni piove",
+            "Una canzone d'amore dedicata a una persona che odi",
+            "Un programma tv per introversi",
+            "Un personaggio storico con il vizio del gioco d'azzardo",
+            "Un film dove un pesce s'innamora di una principessa",
+            "Una serie tv girata interamente in un bagno",
+            "Uno sport dove puoi partecipare solo se hai i capelli biondi",
+            "Un dolce che mangiano sempre i poliziotti",
+            "Un brand di patatine che sanno di cazzo",
+            "Un film d'azione dove il protagonista è un cagasotto",
+            "Un film horror ambientato in una sala d'attesa dell'ASL",
+            "Uno scrittore che scrive le sue opere solo da ubriaco",
+            "Una mafia poco efficace",
+            "Un nome di un cantante natalizio",
+            "Un cibo che ti fa allungare il pene",
+            "Una marca di abbigliamento sportivo per pigri",
+            "Un personaggio storico che non sapeva parlare",
+            "Un film dove un medico fa sesso con i pazienti per curarli",
+            "Un nome di un artista che fa il poliziotto",
+            "Un cocktail che a ogni sorso ti fa venire nelle mutande",
+            "Una bevanda che trasforma gli etero in gay",
+            "Un nome di un medicinale che ti fa venire la diarrea",
+            "Un film dove il protagonista fa sesso con una ragazza e si ammala",
+            "Un supereroe che si masturba molto",
+            "Un comico che fa il gangster",
+            "Un brand di caramelle per ladri",
+            "Uno sport da combattimento per persone cagasotto",
+            "Un film d'azione dove i poliziotti sono obesi",
+            "Un filosofo molto avvezzo a fare guerre",
+            "Un quotidiano per donne incinta",
+            "Un gruppo metal molto gentile",
+            "Un regista che non ama il freddo",
+            "Un attore che apre una pizzeria",
+            "Uno sport estremo per persone estremamente religiose",
+            "Un personaggio biblico che ha paura dell'altezza",
+            "Un nome proprio per chi pensa sempre ai soldi",
+            "Un artista che quando sale sul palco ha paura e scende",
+            "Un brand italiano con un segreto da nascondere",
+            "Un lavoro per chi è sempre arrapato",
+            "Un personaggio di Dragonball amante della palestra",
+            "Un film romantico per persone senza sentimenti",
+            "Uno show televisivo per muti",
+            "Un nome di un giornale per sborrare",
+            "Una principessa disney con only fans",
+            "Una squadra di calcio con i calciatori puzzolenti",
+            "Un attore che prima di andare in scena si mette un dito nel culo"
+        ];
+
+        const facceDado = ["PERSONE", "BRAND", "TITOLI", "FACTOTUM", "BRANDSTORM", "BRIEF ASSURDO"];
+        const iconeCategoria = {
+            "PERSONE": "persone.png", "BRAND": "brand.png", "TITOLI": "titolo.png",
+            "FACTOTUM": "factotum.png", "BRANDSTORM": "brandstorm.png", "BRIEF ASSURDO": "brief_assurdo.png"
+        };
+        
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            document.getElementById('ringAvvioSound').play().then(() => document.getElementById('ringAvvioSound').pause()).catch(e=>{});
+            document.getElementById('alarmClockSound').play().then(() => document.getElementById('alarmClockSound').pause()).catch(e=>{});
+            document.getElementById('alarmFineSound').play().then(() => document.getElementById('alarmFineSound').pause()).catch(e=>{});
+            document.getElementById('diceRollSound').play().then(() => document.getElementById('diceRollSound').pause()).catch(e=>{});
+            audioUnlocked = true;
+        }
+
+        function stopSuoni() {
+            const avvio = document.getElementById('ringAvvioSound');
+            const clock = document.getElementById('alarmClockSound');
+            const fine = document.getElementById('alarmFineSound');
+            const diceSound = document.getElementById('diceRollSound');
+            avvio.pause(); avvio.currentTime = 0;
+            clock.pause(); clock.currentTime = 0;
+            fine.pause(); fine.currentTime = 0;
+            diceSound.pause(); diceSound.currentTime = 0;
+        }
+
+        function avviaLancioDado() {
+            unlockAudio(); 
+            clearInterval(timerInterval);
+            resetTimerUI();
+            
+            const mainCard = document.getElementById('main-card');
+            const diceScene = document.getElementById('dice-scene');
+            const diceCube = document.getElementById('dice-cube');
+            const diceAudio = document.getElementById('diceRollSound');
+
+            mainCard.classList.add('opacity-0'); 
+            
+            setTimeout(() => {
+                mainCard.classList.add('hidden');
+                
+                diceAudio.volume = 1;
+                diceAudio.currentTime = 0;
+                diceAudio.play().catch(e=>{});
+
+                diceScene.style.display = 'block';
+                diceCube.classList.remove('rolling');
+                void diceCube.offsetWidth; 
+                diceCube.classList.add('rolling');
+
+                const faceEls = [1,2,3,4,5,6].map(i => document.getElementById('face-img-'+i));
+                
+                shuffleInterval = setInterval(() => {
+                    faceEls.forEach(img => {
+                        const randomFace = facceDado[Math.floor(Math.random() * facceDado.length)];
+                        img.src = iconeCategoria[randomFace];
+                    });
+                }, 100); 
+
+                setTimeout(() => {
+                    clearInterval(shuffleInterval);
+                    diceScene.style.display = 'none';
+                    
+                    let fadeAudio = setInterval(() => {
+                        if(diceAudio.volume > 0.1) {
+                            diceAudio.volume -= 0.1;
+                        } else {
+                            clearInterval(fadeAudio);
+                            diceAudio.pause();
+                        }
+                    }, 50);
+
+                    mostraAnimazionePNG();
+                }, 1400); 
+            }, 300);
+        }
+
+        function mostraAnimazionePNG() {
+            facciaPescata = facceDado[Math.floor(Math.random() * facceDado.length)];
+            
+            const introScene = document.getElementById('png-intro-scene');
+            const introPng = document.getElementById('intro-png');
+            const introText = document.getElementById('intro-text');
+            
+            introPng.src = iconeCategoria[facciaPescata];
+            introText.innerText = facciaPescata;
+            
+            introScene.classList.remove('hidden');
+            
+            introPng.classList.remove('animate-intro-logo');
+            void introPng.offsetWidth;
+            introPng.classList.add('animate-intro-logo');
+
+            introText.classList.remove('epic-text');
+            void introText.offsetWidth;
+            introText.classList.add('epic-text');
+            
+            setTimeout(() => {
+                introScene.classList.add('hidden');
+                mostraCartaFinale(facciaPescata);
+            }, 2000);
+        }
+
+        function mostraCartaFinale(faccia) {
+            const mainCard = document.getElementById('main-card');
+            const diceDisplay = document.getElementById('dice-result');
+            const mainContent = document.getElementById('main-content');
+            const subInfo = document.getElementById('sub-info');
+            const timerContainer = document.getElementById('timer-container');
+            const rollButton = document.getElementById('roll-button');
+
+            mainCard.className = "w-full max-w-2xl game-card p-5 md:p-10 rounded-[2.5rem] md:rounded-[3rem] text-center flex flex-col justify-between flex-grow md:flex-grow-0 min-h-[400px] animate-fade-in z-10";
+            
+            mainCard.classList.remove('card-neutra', 'hidden', 'opacity-0'); 
+            rollButton.classList.add('hidden'); 
+            diceDisplay.innerText = faccia;
+            
+            if (["PERSONE", "BRAND", "TITOLI", "FACTOTUM"].includes(faccia)) {
+                if(faccia === "PERSONE") mainCard.classList.add("card-persone");
+                if(faccia === "BRAND") mainCard.classList.add("card-brand");
+                if(faccia === "TITOLI") mainCard.classList.add("card-titoli");
+                if(faccia === "FACTOTUM") mainCard.classList.add("card-factotum");
+
+                const target = targetList[Math.floor(Math.random() * targetList.length)];
+                mainContent.innerText = "TARGET: " + target.toUpperCase();
+                
+                let buttonsHTML = `<div class="opacity-90 block text-[10px] md:text-sm mb-2 md:mb-3 uppercase tracking-widest font-bold mt-1 md:mt-2 text-white">Scegli una mappa a voce:</div>`;
+                buttonsHTML += `<div class="flex flex-wrap justify-center gap-1 md:gap-2 animate-fade-in">`;
+                
+                mappeCreative[faccia].forEach(cat => {
+                    buttonsHTML += `<button onclick="selezionaSottocategoria('${cat.replace(/'/g, "\\'")}', '${target.replace(/'/g, "\\'")}')" 
+                                    class="px-2 py-1.5 md:px-3 md:py-2 bg-black/20 hover:bg-black/40 active:bg-black/50 rounded-lg md:rounded-xl text-xs md:text-base font-bold text-white shadow-sm border border-white/20 transition-all">${cat}</button>`;
+                });
+                buttonsHTML += `</div>`;
+                subInfo.innerHTML = buttonsHTML;
+            } 
+            else if (faccia === "BRANDSTORM") {
+                mainCard.classList.add("card-jolly");
+                mainContent.innerText = "FAI TU! 🚀";
+                subInfo.innerHTML = `<div class="text-lg md:text-2xl font-black px-4 opacity-80 mt-2 md:mt-4 uppercase text-black">Brief libero.<br>Inventa tutto tu.</div>`;
+                timerContainer.classList.remove('hidden'); 
+                document.getElementById('skip-timer-btn').classList.remove('hidden');
+            } 
+            else if (faccia === "BRIEF ASSURDO") {
+                mainCard.classList.add("card-assurdo");
+                const brief = briefAssurdi[Math.floor(Math.random() * briefAssurdi.length)];
+                mainContent.className = "text-2xl md:text-4xl font-extrabold leading-tight mb-2 uppercase"; 
+                mainContent.innerText = brief.toUpperCase();
+                subInfo.innerHTML = `<div class="text-sm md:text-lg font-bold tracking-widest px-4 mt-2 md:mt-4 text-yellow-500 uppercase italic">Il cliente non sente ragioni.</div>`;
+                timerContainer.classList.remove('hidden'); 
+                document.getElementById('skip-timer-btn').classList.remove('hidden');
+            }
+        }
+
+        function selezionaSottocategoria(sottocategoria, target) {
+            const subInfo = document.getElementById('sub-info');
+            const timerContainer = document.getElementById('timer-container');
+            
+            const templates = {
+                "Attori/attrici": ["Il cliente cerca l'attore perfetto per diventare il volto di TARGET.", "Scegli un attore o un'attrice e fagli interpretare il ruolo di TARGET.", "Vogliamo un divo di Hollywood famoso segretamente per TARGET."],
+                "Cantanti": ["Lanciate un nuovo cantante o band che scriva solo brani su TARGET.", "Il nuovo idolo del pop! Il suo chiodo fisso nella vita? TARGET."],
+                "Sportivi": ["Un atleta leggendario, ma diventato famoso per la sua passione per TARGET.", "Inventate uno sportivo che ha dedicato l'intera carriera a TARGET."],
+                "Personaggi di finzione": ["Create un nuovo villain dei fumetti completamente ossessionato da TARGET.", "Un eroe coraggioso, il cui unico vero punto debole è TARGET."],
+                "Personaggi storici": ["Riscrivete la storia: un personaggio storico noto segretamente per TARGET.", "Un leader del passato che in realtà ha scatenato guerre per TARGET."],
+                "Personaggi mitologici": ["Inventate un nuovo dio dell'Olimpo: il possente protettore di TARGET.", "Una creatura mitologica spaventosa, nata magicamente da TARGET."],
+                "Scrittori/poeti": ["Un poeta tormentato che scrive rime strappalacrime solo su TARGET.", "Uno scrittore da premio Nobel il cui capolavoro parla di TARGET."],
+                "Sport": ["Un nuovo brand di abbigliamento sportivo perfetto per chi ama TARGET.", "Rivoluzionate il mondo dello sport con un'attrezzatura a tema TARGET."],
+                "Bevande": ["Il mercato ha sete! Create una bevanda che sappia clamorosamente di TARGET.", "L'energy drink definitivo, pensato esclusivamente per TARGET."],
+                "Auto": ["Inventate una nuova auto o veicolo assurdo, perfetto per fuggire da TARGET.", "Un'automobile rivoluzionaria il cui design è ispirato a TARGET."],
+                "Tecnologia": ["Inventate un gadget geniale o qualcosa di iper-tecnologico a tema TARGET.", "La Silicon Valley trema: in arrivo il primo dispositivo per TARGET."],
+                "Moda": ["L'alta moda incontra la follia: create una linea di vestiti ispirata a TARGET.", "Sfilata a Milano! Il cliente vuole una collezione per chi non può fare a meno di TARGET."],
+                "Cibo": ["Apriamo un ristorante stellato o un fast food basato interamente su TARGET.", "Il nuovo snack che andrà a ruba nei supermercati. Gusto principale: TARGET."],
+                "Farmaci/cosmetici": ["Un farmaco miracoloso o una crema incredibile per curare (o esaltare) TARGET.", "Il cliente esige una nuova linea beauty o medica dedicata a TARGET."],
+                "Catene e super": ["Una nuova catena di negozi in cui puoi trovare solo prodotti legati a TARGET.", "Un supermercato bizzarro che vende solo articoli in saldo per TARGET."],
+                "Film": ["Scrivete il titolo di un nuovo film da Oscar. Tema centrale e indiscusso: TARGET.", "Un blockbuster hollywoodiano indimenticabile e pieno d'azione su TARGET."],
+                "Serie TV": ["Una serie Netflix da binge-watching estremo che parla di TARGET.", "Pitch per una serie tv di 8 stagioni, tutte incentrate su TARGET."],
+                "Cartone animato": ["Un cartone animato per traumatizzare i bambini, incentrato su TARGET.", "Il nuovo successo d'animazione! I protagonisti? Ovviamente TARGET."],
+                "Videogiochi": ["Il gioco dell'anno! Un'avventura epica in cui devi affrontare TARGET.", "Un videogioco multiplayer dove l'obiettivo finale è sconfiggere TARGET."],
+                "Canzoni": ["Il tormentone estivo che nessuno voleva. Il ritornello parla di TARGET.", "Scrivete il titolo di una ballad romantica dedicata in gran segreto a TARGET."],
+                "Libri/opere": ["Un romanzo bestseller in cima alle classifiche. Argomento scottante: TARGET.", "Un'opera teatrale drammatica e struggente che affronta il tabù di TARGET."],
+                "Programmi TV": ["Un reality show trash in prima serata, con protagonisti assoluti: TARGET.", "Un game show assurdo dove il montepremi si vince solo se ami TARGET."],
+                "Riviste": ["Il nuovo magazine in edicola da domani. La copertina strilla: TARGET.", "Una rivista scandalistica che svela gli oscuri e inconfessabili segreti di TARGET."],
+                "Giochi da tavola": ["Un gioco in scatola per distruggere le amicizie. Tema del tabellone: TARGET.", "Lanciate i dadi in questo nuovo gioco di carte spietato su TARGET."],
+                "Animali": ["È stata scoperta una nuova specie animale! Assomiglia stranamente a TARGET.", "Inventate un animale domestico illegale che si nutre esclusivamente di TARGET."],
+                "Luoghi": ["Un'isola sperduta o un locale segreto frequentato solo da TARGET.", "Un nuovo e assurdo parco divertimenti, interamente a tema TARGET."],
+                "Sport/hobby": ["Uno sport estremo o un passatempo rilassante, ma fatto da chi pensa a TARGET.", "Il cliente vuole lanciare una nuova disciplina olimpica legata a TARGET."],
+                "Professioni": ["Un nuovo lavoro ricercatissimo sul mercato, che ha a che fare con TARGET.", "Siete i più grandi consulenti esperti in una professione legata a TARGET."],
+                "Modi di dire": ["Inventate un nuovo modo di dire saggio e popolare usando il concetto di TARGET.", "Un proverbio antico che ci insegna molto sulla vita e su TARGET."],
+                "App e social": ["Il nuovo social network che distruggerà TikTok. Il focus è TARGET.", "Un'app di dating o di estrema utilità pensata apposta per TARGET."],
+                "Piatti e cucine": ["Il piatto forte del vostro nuovo menu. Ingrediente speciale ed esotico: TARGET.", "Inventate una ricetta tradizionale tramandata dai più grandi maestri di TARGET."],
+                "Nomi propri": ["Inventate nome e cognome per una persona pesantemente ossessionata da TARGET.", "Come si chiama colui che è appena stato incoronato re incontrastato di TARGET?"]
+            };
+
+            let fraseScelta = "";
+            if (templates[sottocategoria]) {
+                fraseScelta = templates[sottocategoria][Math.floor(Math.random() * templates[sottocategoria].length)];
+            } else {
+                fraseScelta = "Inventa qualcosa di geniale per la categoria SOTTOCATEGORIA a tema TARGET.".replace("SOTTOCATEGORIA", `<span class="text-yellow-300 not-italic uppercase">${sottocategoria}</span>`);
+            }
+
+            const fraseFinale = fraseScelta.replace("TARGET", `<span class="text-yellow-300 not-italic uppercase">${target}</span>`);
+
+            subInfo.innerHTML = `
+                <div class="mt-3 md:mt-4 p-4 md:p-6 bg-black/30 rounded-2xl md:rounded-3xl animate-fade-in border border-white/20 shadow-[inset_0_4px_10px_rgba(0,0,0,0.3)]">
+                    <span class="block text-[10px] md:text-sm uppercase tracking-[0.2em] opacity-80 mb-2 md:mb-3 font-bold text-white">Il brief finale:</span>
+                    <div class="text-xl md:text-3xl font-black text-white font-sans tracking-wide leading-snug drop-shadow-md italic">"${fraseFinale}"</div>
+                </div>
+            `;
+            
+            timerContainer.classList.remove('hidden');
+            document.getElementById('skip-timer-btn').classList.remove('hidden');
+        }
+
+        // --- TIMER E SKIP ---
+        function startTimer() {
+            clearInterval(timerInterval); stopSuoni();
+            seconds = 60;
+            const display = document.getElementById('timer-display');
+            const btn = document.getElementById('timer-btn');
+            const avvio = document.getElementById('ringAvvioSound');
+            
+            document.getElementById('timer-container').classList.remove('hidden');
+            display.classList.remove('hidden');
+            display.style.opacity = "1"; 
+            btn.disabled = true; 
+            btn.innerText = "⏳ In corso...";
+            
+            avvio.play().catch(e=>{console.log(e)});
+
+            timerInterval = setInterval(() => {
+                seconds--; display.innerText = seconds;
+
+                if (seconds === 10) { 
+                    display.classList.add('ending'); 
+                    document.getElementById('alarmClockSound').play().catch(e=>{}); 
+                } 
+                if (seconds <= 0) { fineTimer(); }
+            }, 1000);
+        }
+
+        function skipTimer() { fineTimer(); }
+
+        function fineTimer() {
+            clearInterval(timerInterval);
+            const clock = document.getElementById('alarmClockSound');
+            const fine = document.getElementById('alarmFineSound');
+            clock.pause(); clock.currentTime = 0;
+            fine.play().catch(e=>{}); 
+            
+            const display = document.getElementById('timer-display');
+            display.innerText = "STOP!"; 
+            document.body.style.backgroundColor = "#4a0000"; 
+            
+            setTimeout(() => { 
+                document.body.style.backgroundColor = "#1a1a1a"; 
+                display.classList.add('hidden');
+                document.getElementById('timer-container').classList.add('hidden');
+                
+                if (players.length > 0) {
+                    document.getElementById('btn-vai-votazione').classList.remove('hidden');
+                } else {
+                    document.getElementById('btn-nuovo-round-libero').classList.remove('hidden');
+                }
+            }, 1500);
+        }
+
+        function resetTimerUI() {
+            stopSuoni(); seconds = 60;
+            const display = document.getElementById('timer-display');
+            display.innerText = "60"; display.style.opacity = "0.1";
+            display.classList.remove('ending', 'hidden');
+            document.getElementById('timer-display').classList.add('hidden');
+            document.getElementById('timer-btn').disabled = false;
+            document.getElementById('timer-btn').innerText = "⏳ Avvia Timer (60s)";
+            document.getElementById('skip-timer-btn').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
